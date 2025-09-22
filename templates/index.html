@@ -1,23 +1,27 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <title>Böbrek Taşı Tespit</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta charset="UTF-8">
+    <title>💎 Böbrek Taşı Tespit</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <div class="container">
-    <h1>💎 Böbrek Taşı Tespit Uygulaması</h1>
-    <form method="post" enctype="multipart/form-data">
-      <input type="file" name="file" accept=".jpg,.jpeg,.png,.dcm" required>
-      <button type="submit">Tahmin Et</button>
-    </form>
+    <div class="container">
+        <h1>💎 Böbrek Taşı Tespit Uygulaması</h1>
+        <p>Resim veya DICOM yükleyin, model sonucu göstersin.</p>
 
-    {% if result %}
-      <h2>🔎 Tahmin: <span>{{ result }}</span></h2>
-      <p>Güven: {{ "%.2f"|format(confidence) }}</p>
-    {% endif %}
-  </div>
+        <form method="POST" enctype="multipart/form-data">
+            <input type="file" name="file" accept=".jpg,.jpeg,.png,.dcm" required>
+            <button type="submit">Tahmin Et</button>
+        </form>
+
+        {% if result %}
+            <div class="result">
+                <h2>🔎 Tahmin: {{ result }}</h2>
+                <p>Güven: {{ "%.2f"|format(confidence) }}</p>
+            </div>
+        {% endif %}
+    </div>
 </body>
 </html>
 
