@@ -21,12 +21,7 @@ if os.path.exists("smallcnn_224_best.h5"):
     model_file = "smallcnn_224_best.h5"
 elif os.path.exists("smallcnn_224_best.keras"):
     model_file = "smallcnn_224_best.keras"
-elif os.path.exists("smallcnn_224_best.H5"):
-    model_file = "smallcnn_224_best.H5",
-elif os.path.exists("smallcnn_224_best.KERAS"):
-    model_file = "smallcnn_224_best.KERAS"
-    
-    
+
 if model_file is None:
     raise FileNotFoundError("❌ Model dosyası bulunamadı!")
 
@@ -45,8 +40,12 @@ def preprocess_image(img: Image.Image):
     return np.expand_dims(x, axis=0)
 
 def preprocess_dicom(file_path):
-    ds = pydicom.dcmread(file_path)
-    arr = ds.pixel_array.astype(np.float32)
+    try:
+        ds = pydicom.dcmread(file_path)
+        arr = ds.pixel_array.astype(np.float32)
+    except Exception as e:
+        raise ValueError(f"DICOM okunamadı: {e}")
+
     arr = (arr - np.min(arr)) / (np.max(arr) - np.min(arr) + 1e-8)
     arr = cv2.resize(arr, IMG_SIZE)
     rgb = np.stack([arr, arr, arr], axis=-1)
@@ -67,7 +66,7 @@ def index():
     confidence = None
 
     if request.method == "POST":
-        file = request.files["file"]
+        file = request.files.get("file")
 
         if file:
             filename = file.filename.lower()
