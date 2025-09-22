@@ -1,0 +1,6 @@
+flask
+tensorflow-cpu==2.15.0
+pillow
+pydicom
+opencv-python-headless
+gunicorn

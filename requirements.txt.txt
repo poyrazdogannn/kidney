@@ -1,5 +1,0 @@
-flask
-tensorflow-cpu
-pillow
-pydicom
-opencv-python-headless
