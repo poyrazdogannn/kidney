@@ -1,7 +1,7 @@
-tensorflow==2.15.0
 flask
-pillow
+gunicorn
+tensorflow==2.20.0
 numpy
+pillow
 opencv-python-headless
 pydicom
-gunicorn
