@@ -16,16 +16,11 @@ app = Flask(__name__)
 # --------------------------
 # Modeli yükle
 # --------------------------
-model_file = None
-if os.path.exists("smallcnn_224_best.h5"):
-    model_file = "smallcnn_224_best.h5"
-elif os.path.exists("smallcnn_224_best.keras"):
-    model_file = "smallcnn_224_best.keras"
+model_path = os.getenv("MODEL_PATH", "smallcnn_224_best.h5")  # 🔑 Env var varsa onu kullan, yoksa default
+if not os.path.exists(model_path):
+    raise FileNotFoundError(f"❌ Model dosyası bulunamadı: {model_path}")
 
-if model_file is None:
-    raise FileNotFoundError("❌ Model dosyası bulunamadı!")
-
-model = tf.keras.models.load_model(model_file, compile=False)
+model = tf.keras.models.load_model(model_path, compile=False)
 
 class_names = ["Taş Yok", "Taş Var"]
 IMG_SIZE = (224, 224)
@@ -40,12 +35,8 @@ def preprocess_image(img: Image.Image):
     return np.expand_dims(x, axis=0)
 
 def preprocess_dicom(file_path):
-    try:
-        ds = pydicom.dcmread(file_path)
-        arr = ds.pixel_array.astype(np.float32)
-    except Exception as e:
-        raise ValueError(f"DICOM okunamadı: {e}")
-
+    ds = pydicom.dcmread(file_path)
+    arr = ds.pixel_array.astype(np.float32)
     arr = (arr - np.min(arr)) / (np.max(arr) - np.min(arr) + 1e-8)
     arr = cv2.resize(arr, IMG_SIZE)
     rgb = np.stack([arr, arr, arr], axis=-1)
@@ -66,7 +57,7 @@ def index():
     confidence = None
 
     if request.method == "POST":
-        file = request.files.get("file")
+        file = request.files["file"]
 
         if file:
             filename = file.filename.lower()
@@ -86,3 +77,4 @@ def index():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
+
