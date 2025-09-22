@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: kidney-stone-app
+    name: kidney
     env: python
     buildCommand: "pip install -r requirements.txt"
     startCommand: "gunicorn app:app"
