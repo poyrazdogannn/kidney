@@ -4,5 +4,6 @@ numpy>=1.23.5
 pillow>=10.0.0
 opencv-python-headless==4.8.1.78
 pydicom>=2.4.4
+h5py
 
 
