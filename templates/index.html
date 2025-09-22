@@ -1,0 +1,35 @@
+!DOCTYPE html
+html lang=tr
+head
+    meta charset=UTF-8
+    titleBöbrek Taşı Tespittitle
+    link href=httpscdn.jsdelivr.netnpmbootstrap@5.3.3distcssbootstrap.min.css rel=stylesheet
+    style
+        body { background #f4f6f9; }
+        .card { margin-top 80px; border-radius 15px; box-shadow 0px 4px 20px rgba(0,0,0,0.1); }
+        .btn-custom { background #007bff; color white; }
+        .btn-customhover { background #0056b3; }
+        h1 { font-size 1.8rem; }
+    style
+head
+body
+    div class=container text-center
+        div class=card p-4
+            h1💎 Böbrek Taşı Tespit Uygulamasıh1
+            p class=text-mutedResim veya DICOM yükleyin → Model sonucu versin.p
+
+            form method=POST enctype=multipartform-data
+                input type=file name=file class=form-control mb-3 required
+                button type=submit class=btn btn-customTahmin Etbutton
+            form
+
+            {% if result %}
+            div class=alert alert-info mt-4
+                h4🔎 Tahmin strong{{ result }}strongh4
+                pGüven Skoru {{ %.2fformat(conf) }}p
+            div
+            {% endif %}
+        div
+    div
+body
+html
