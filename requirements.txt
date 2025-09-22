@@ -1,7 +1,7 @@
 flask
 gunicorn
 tensorflow==2.20.0
-numpy
-pillow
-opencv-python-headless
 pydicom
+opencv-python-headless
+Pillow
+numpy
