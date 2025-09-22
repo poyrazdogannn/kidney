@@ -1,8 +1,8 @@
 # ==========================
-# app.py – Kidney Stone Detection (Taş Var / Taş Yok)
+# app.py – Flask + TensorFlow (Taş Var / Taş Yok)
 # ==========================
 
-import streamlit as st
+from flask import Flask, render_template, request
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.preprocessing import image
@@ -11,39 +11,27 @@ import pydicom
 import cv2
 import os
 
-# --------------------------
-# GPU devre dışı bırak (Render CPU ortamı)
-# --------------------------
-try:
-    tf.config.set_visible_devices([], 'GPU')
-except Exception:
-    pass
+app = Flask(__name__)
 
 # --------------------------
 # Modeli yükle
 # --------------------------
-@st.cache_resource
-def load_model():
-    model_file = None
-    if os.path.exists("smallcnn_224_best.h5"):
-        model_file = "smallcnn_224_best.h5"
-    elif os.path.exists("smallcnn_224_best.keras"):
-        model_file = "smallcnn_224_best.keras"
+model_file = None
+if os.path.exists("smallcnn_224_best.h5"):
+    model_file = "smallcnn_224_best.h5"
+elif os.path.exists("smallcnn_224_best.keras"):
+    model_file = "smallcnn_224_best.keras"
+elif os.path.exists("smallcnn_224_best.H5"):
+    model_file = "smallcnn_224_best.H5",
+elif os.path.exists("smallcnn_224_best.KERAS"):
+    model_file = "smallcnn_224_best.KERAS"
+    
+    
+if model_file is None:
+    raise FileNotFoundError("❌ Model dosyası bulunamadı!")
 
-    if model_file is None:
-        raise FileNotFoundError("❌ Model dosyası bulunamadı (smallcnn_224_best.h5 veya .keras).")
+model = tf.keras.models.load_model(model_file, compile=False)
 
-    st.write(f"📂 Model yükleniyor: `{model_file}`")
-    return tf.keras.models.load_model(model_file, compile=False)
-
-try:
-    model = load_model()
-    MODEL_OK = True
-except Exception as e:
-    st.error(f"🚨 Model yüklenemedi: {e}")
-    MODEL_OK = False
-
-# Sınıf isimleri (eğitim sırasında kullandığınız sıraya göre kontrol edin!)
 class_names = ["Taş Yok", "Taş Var"]
 IMG_SIZE = (224, 224)
 
@@ -56,8 +44,8 @@ def preprocess_image(img: Image.Image):
     x = image.img_to_array(img) / 255.0
     return np.expand_dims(x, axis=0)
 
-def preprocess_dicom(file):
-    ds = pydicom.dcmread(file)
+def preprocess_dicom(file_path):
+    ds = pydicom.dcmread(file_path)
     arr = ds.pixel_array.astype(np.float32)
     arr = (arr - np.min(arr)) / (np.max(arr) - np.min(arr) + 1e-8)
     arr = cv2.resize(arr, IMG_SIZE)
@@ -71,28 +59,31 @@ def predict(img_tensor):
     return class_names[pred_idx], confidence
 
 # --------------------------
-# Streamlit UI
+# Flask Routes
 # --------------------------
-st.title("💎 Böbrek Taşı Tespit Uygulaması")
-st.write("Resim veya DICOM yükleyin, model **Taş Var** / **Taş Yok** sonucunu verecek.")
+@app.route("/", methods=["GET", "POST"])
+def index():
+    result = None
+    confidence = None
 
-if MODEL_OK:
-    uploaded_file = st.file_uploader("Bir dosya yükleyin (jpg/png/dcm)", type=["jpg", "jpeg", "png", "dcm"])
+    if request.method == "POST":
+        file = request.files["file"]
 
-    if uploaded_file is not None:
-        suffix = os.path.splitext(uploaded_file.name)[1].lower()
+        if file:
+            filename = file.filename.lower()
+            filepath = os.path.join("uploads", filename)
+            os.makedirs("uploads", exist_ok=True)
+            file.save(filepath)
 
-        if suffix == ".dcm":
-            st.info("📂 DICOM dosyası yüklendi")
-            img_tensor = preprocess_dicom(uploaded_file)
-            result, conf = predict(img_tensor)
-            st.subheader(f"🔎 Tahmin: **{result}** (Güven: {conf:.2f})")
+            if filename.endswith(".dcm"):
+                img_tensor = preprocess_dicom(filepath)
+            else:
+                img = Image.open(filepath)
+                img_tensor = preprocess_image(img)
 
-        else:
-            img = Image.open(uploaded_file)
-            st.image(img, caption="Yüklenen Görüntü", use_column_width=True)
-            img_tensor = preprocess_image(img)
-            result, conf = predict(img_tensor)
-            st.subheader(f"🔎 Tahmin: **{result}** (Güven: {conf:.2f})")
-else:
-    st.warning("⚠️ Model yüklenemediği için tahmin yapılamıyor.")
+            result, confidence = predict(img_tensor)
+
+    return render_template("index.html", result=result, confidence=confidence)
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
